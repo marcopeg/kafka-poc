@@ -10,11 +10,11 @@ module.exports = ({ registerHook, registerAction }) => {
     handler: async ({ getContext }) => {
       const kafka = getContext('kafka');
 
-      const consumer = kafka.consumer({ groupId: `logger-${Date.now()}` });
+      const consumer = kafka.consumer({ groupId: `logger` });
       await consumer.connect();
       await consumer.subscribe({
         topic: /poc-.*/i,
-        fromBeginning: false,
+        fromBeginning: true,
       });
 
       await consumer.run({

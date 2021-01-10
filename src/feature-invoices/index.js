@@ -85,7 +85,7 @@ module.exports = ({ registerHook, registerAction }) => {
         'poc-thresholds@restored': createThresholdRestoredHandler(apis),
       };
 
-      const consumer = kafka.consumer({ groupId: `invoices-${Date.now()}` });
+      const consumer = kafka.consumer({ groupId: `invoices` });
       await consumer.connect();
       await consumer.subscribe({
         topic: 'poc-users',

@@ -69,11 +69,11 @@ module.exports = ({ registerHook, registerAction }) => {
         deleted: createInvoiceDeletedEvent(apis),
       };
 
-      const consumer = kafka.consumer({ groupId: `thresholds-${Date.now()}` });
+      const consumer = kafka.consumer({ groupId: `thresholds` });
       await consumer.connect();
       await consumer.subscribe({
         topic: 'poc-invoices',
-        fromBeginning: false,
+        fromBeginning: true,
       });
 
       await consumer.run({
