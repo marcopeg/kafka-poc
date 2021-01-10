@@ -34,7 +34,7 @@ const makeInvoiceCreateHandler = ({ query, emit }) => async (
   );
 
   await emit('created', invoice.rows[0]);
-  reply.send('+ok');
+  reply.send(invoice.rows[0]);
 };
 
 module.exports = makeInvoiceCreateHandler;

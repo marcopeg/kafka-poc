@@ -31,9 +31,9 @@ module.exports = ({ registerHook, registerAction }) => {
     trace: __filename,
     hook: '$INIT_FEATURE',
     handler: async ({ getContext, setContext }) => {
-      const kafka = getContext('kafka');
-      const producer = kafka.producer();
-      await producer.connect();
+      const createProducer = getContext('kafka.createProducer');
+      const producer = await createProducer();
+
       setContext('thresholds.emit', (key, value) =>
         producer.send({
           topic: 'poc-thresholds',
@@ -56,7 +56,7 @@ module.exports = ({ registerHook, registerAction }) => {
     hook: '$START_FEATURE',
     handler: async ({ getContext }) => {
       const fetchq = getContext('fetchq');
-      const kafka = getContext('kafka');
+      const createConsumer = getContext('kafka.createConsumer');
       const emit = getContext('thresholds.emit');
 
       const apis = {
@@ -69,8 +69,7 @@ module.exports = ({ registerHook, registerAction }) => {
         deleted: createInvoiceDeletedEvent(apis),
       };
 
-      const consumer = kafka.consumer({ groupId: `thresholds` });
-      await consumer.connect();
+      const consumer = await createConsumer({ groupId: `thresholds` });
       await consumer.subscribe({
         topic: 'poc-invoices',
         fromBeginning: true,

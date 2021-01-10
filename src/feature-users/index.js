@@ -30,9 +30,9 @@ module.exports = ({ registerHook, registerAction }) => {
     trace: __filename,
     hook: '$INIT_FEATURE',
     handler: async ({ getContext, setContext }) => {
-      const kafka = getContext('kafka');
-      const producer = kafka.producer();
-      await producer.connect();
+      const createProducer = getContext('kafka.createProducer');
+      const producer = await createProducer();
+
       setContext('users.emit', (key, value) =>
         producer.send({
           topic: 'poc-users',

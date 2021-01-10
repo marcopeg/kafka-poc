@@ -8,10 +8,9 @@ module.exports = ({ registerHook, registerAction }) => {
     trace: __filename,
     hook: '$START_FEATURE',
     handler: async ({ getContext }) => {
-      const kafka = getContext('kafka');
+      const createConsumer = getContext('kafka.createConsumer');
 
-      const consumer = kafka.consumer({ groupId: `logger` });
-      await consumer.connect();
+      const consumer = await createConsumer({ groupId: `logger` });
       await consumer.subscribe({
         topic: /poc-.*/i,
         fromBeginning: true,

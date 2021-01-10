@@ -15,7 +15,7 @@ const makeInvoiceDeleteHandler = ({ query, emit }) => async (
   }
 
   await emit('deleted', invoices.rows[0]);
-  reply.send('+ok');
+  reply.send(invoices.rows[0]);
 };
 
 module.exports = makeInvoiceDeleteHandler;
