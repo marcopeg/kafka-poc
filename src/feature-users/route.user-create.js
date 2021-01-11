@@ -19,7 +19,7 @@ const makeUserCreateHandler = ({ query, emitJSON }) => async (
   );
 
   // Communication:
-  await emitJSON('poc-users', 'created', users.rows[0]);
+  await emitJSON('created@poc-users', users.rows[0]);
   reply.send(users.rows[0]);
 };
 

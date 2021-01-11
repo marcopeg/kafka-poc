@@ -1,6 +1,8 @@
 const { Kafka } = require('kafkajs');
 const { SERVICE_NAME, hooks } = require('./hooks');
 
+const isFunction = (obj) => !!(obj && obj.constructor && obj.call && obj.apply);
+
 module.exports = ({ registerHook, registerAction }) => {
   registerHook(hooks);
 
@@ -30,20 +32,81 @@ module.exports = ({ registerHook, registerAction }) => {
         return producer;
       };
 
-      const emitJSON = async (topic, key, value) => {
+      // event: 'key@topic'
+      // payload: { json: 'value' }
+      const emitJSON = async (event, payload) => {
         if (!emitJSON.producer) {
           emitJSON.producer = await createProducer();
         }
 
+        const [key, topic] = event.split('@');
         emitJSON.producer.send({
           topic,
           messages: [
             {
               key,
-              value: JSON.stringify(value),
+              value: JSON.stringify(payload),
               partition: 0,
             },
           ],
+        });
+      };
+
+      // topics: [{ topic: /.*/i, fromBeginning: true }]
+      // handlers: { 'event@key': handler(messagesAsJSON)}
+      const createJSONConsumer = async ({ groupId, topics, handlers }) => {
+        const consumer = await createConsumer({ groupId });
+
+        // Subscribe to all topics:
+        const topicsList =
+          typeof topics === 'string' ? topics.split(',') : topics;
+
+        await Promise.all(
+          topicsList.map((item) => {
+            if (typeof item === 'string') {
+              return consumer.subscribe({
+                topic: item,
+                fromBeginning: true,
+              });
+            } else {
+              return consumer.subscribe(item);
+            }
+          }),
+        );
+
+        // Run the handler that maps to specific event handlers
+        await consumer.run({
+          eachMessage: ({ topic, partition, message }) => {
+            const key = message.key ? message.key.toString() : '';
+            const event = `${key}@${topic}`;
+            const payload = message.value
+              ? JSON.parse(message.value.toString())
+              : {};
+
+            // Single handler for all the events:
+            if (isFunction(handlers)) {
+              handlers(payload, {
+                topic,
+                key,
+                event,
+                partition,
+              });
+
+              // Map of handlers for a specific event:
+            } else {
+              const handler = handlers[event];
+              if (handler) {
+                handler(payload, {
+                  topic,
+                  key,
+                  event,
+                  partition,
+                });
+              } else {
+                console.log(`[kafka] handler not found for: ${event}`);
+              }
+            }
+          },
         });
       };
 
@@ -51,6 +114,7 @@ module.exports = ({ registerHook, registerAction }) => {
         createConsumer,
         createProducer,
         emitJSON,
+        createJSONConsumer,
       });
 
       const errorTypes = ['unhandledRejection', 'uncaughtException'];

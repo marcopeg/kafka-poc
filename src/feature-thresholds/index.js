@@ -32,7 +32,7 @@ module.exports = ({ registerHook, registerAction }) => {
     hook: '$START_FEATURE',
     handler: async ({ getContext }) => {
       const fetchq = getContext('fetchq');
-      const createConsumer = getContext('kafka.createConsumer');
+      const createJSONConsumer = getContext('kafka.createJSONConsumer');
       const emitJSON = getContext('kafka.emitJSON');
 
       const apis = {
@@ -40,28 +40,14 @@ module.exports = ({ registerHook, registerAction }) => {
         emitJSON,
       };
 
-      const thresholdEvents = {
-        created: createInvoiceCreatedHandler(apis),
-        deleted: createInvoiceDeletedEvent(apis),
+      const groupId = `thresholds`;
+      const topics = ['poc-invoices'];
+      const handlers = {
+        'created@poc-invoices': createInvoiceCreatedHandler(apis),
+        'deleted@poc-invoices': createInvoiceDeletedEvent(apis),
       };
 
-      const consumer = await createConsumer({ groupId: `thresholds` });
-      await consumer.subscribe({
-        topic: 'poc-invoices',
-        fromBeginning: true,
-      });
-
-      await consumer.run({
-        eachMessage: async ({ message }) => {
-          const key = message.key.toString();
-          const handler = thresholdEvents[key];
-          if (handler) {
-            await handler(JSON.parse(message.value.toString()));
-          } else {
-            console.log(`>>> Handler not found for "poc-invoices::${key}"`);
-          }
-        },
-      });
+      await createJSONConsumer({ groupId, topics, handlers });
     },
   });
 

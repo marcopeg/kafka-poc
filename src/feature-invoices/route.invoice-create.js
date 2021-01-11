@@ -34,7 +34,7 @@ const makeInvoiceCreateHandler = ({ query, emitJSON }) => async (
     RETURNING *`,
   );
 
-  await emitJSON('poc-invoices', 'created', invoice.rows[0]);
+  await emitJSON('created@poc-invoices', invoice.rows[0]);
   reply.send(invoice.rows[0]);
 };
 

@@ -6,7 +6,7 @@ const createUserCreatedEvent = ({ query }) => ({ id, name }) => {
     VALUES ('${id}', '${name}')
     ON CONFLICT ON CONSTRAINT "invoices_cache_users_pkey"
     DO NOTHING
-`);
+  `);
 };
 
 module.exports = createUserCreatedEvent;

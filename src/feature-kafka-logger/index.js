@@ -8,26 +8,14 @@ module.exports = ({ registerHook, registerAction }) => {
     trace: __filename,
     hook: '$START_FEATURE',
     handler: async ({ getContext }) => {
-      const createConsumer = getContext('kafka.createConsumer');
+      const createJSONConsumer = getContext('kafka.createJSONConsumer');
 
-      const consumer = await createConsumer({ groupId: `logger` });
-      await consumer.subscribe({
-        topic: /poc-.*/i,
-        fromBeginning: true,
-      });
+      const groupId = `kafka-logger`;
+      const topics = [{ topic: /poc-.*/i, fromBeginning: true }];
+      const handlers = (payload, { event }) =>
+        console.log(`[kafka-logger] ${event}`, payload);
 
-      await consumer.run({
-        eachMessage: ({ topic, partition, message }) => {
-          console.log({
-            topic,
-            partition,
-            offset: message.offset,
-            timestamp: message.timestamp,
-            key: message.key ? message.key.toString() : null,
-            message: message.value.toString(),
-          });
-        },
-      });
+      await createJSONConsumer({ groupId, topics, handlers });
     },
   });
 };

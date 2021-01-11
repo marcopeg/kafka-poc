@@ -15,7 +15,7 @@ const makeUserUpdateHandler = ({ query, emitJSON }) => async (
     `UPDATE "users_list" SET name = '${name}' WHERE id = '${id}' RETURNING *`,
   );
 
-  await emitJSON('poc-users', 'updated', users.rows[0]);
+  await emitJSON('updated@poc-users', users.rows[0]);
   reply.send(users.rows[0]);
 };
 

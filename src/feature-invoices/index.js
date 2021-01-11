@@ -41,47 +41,28 @@ module.exports = ({ registerHook, registerAction }) => {
     },
   });
 
-  // Register to Kafka streams that are relevant to this service
   registerAction({
     name: FEATURE_NAME,
     trace: __filename,
     hook: '$START_FEATURE',
     handler: async ({ getContext }) => {
       const fetchq = getContext('fetchq');
-      const createConsumer = getContext('kafka.createConsumer');
+      const createJSONConsumer = getContext('kafka.createJSONConsumer');
 
       const apis = {
         query: fetchq.pool.query.bind(fetchq.pool),
       };
 
-      const userEvents = {
-        'poc-users@created': createUserCreatedHandler(apis),
-        'poc-users@updated': createUserUpdatedHandler(apis),
-        'poc-thresholds@reached': createThresholdReachedHandler(apis),
-        'poc-thresholds@restored': createThresholdRestoredHandler(apis),
+      const groupId = `invoices`;
+      const topics = ['poc-users', 'poc-thresholds'];
+      const handlers = {
+        'created@poc-users': createUserCreatedHandler(apis),
+        'updated@poc-users': createUserUpdatedHandler(apis),
+        'reached@poc-thresholds': createThresholdReachedHandler(apis),
+        'restoredpoc-thresholds': createThresholdRestoredHandler(apis),
       };
 
-      const consumer = await createConsumer({ groupId: `invoices` });
-      await consumer.subscribe({
-        topic: 'poc-users',
-        fromBeginning: true,
-      });
-      await consumer.subscribe({
-        topic: 'poc-thresholds',
-        fromBeginning: true,
-      });
-
-      await consumer.run({
-        eachMessage: async ({ topic, message }) => {
-          const key = `${topic}@${message.key.toString()}`;
-          const handler = userEvents[key];
-          if (handler) {
-            await handler(JSON.parse(message.value.toString()));
-          } else {
-            console.log(`>>> Handler not found for "${key}"`);
-          }
-        },
-      });
+      await createJSONConsumer({ groupId, topics, handlers });
     },
   });
 
