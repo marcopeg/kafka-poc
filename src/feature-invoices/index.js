@@ -41,30 +41,6 @@ module.exports = ({ registerHook, registerAction }) => {
     },
   });
 
-  // Create a producer for the feature:
-  registerAction({
-    name: FEATURE_NAME,
-    trace: __filename,
-    hook: '$INIT_FEATURE',
-    handler: async ({ getContext, setContext }) => {
-      const createProducer = getContext('kafka.createProducer');
-      const producer = await createProducer();
-
-      setContext('invoices.emit', (key, value) =>
-        producer.send({
-          topic: 'poc-invoices',
-          messages: [
-            {
-              key,
-              value: JSON.stringify(value),
-              partition: 0,
-            },
-          ],
-        }),
-      );
-    },
-  });
-
   // Register to Kafka streams that are relevant to this service
   registerAction({
     name: FEATURE_NAME,
@@ -115,11 +91,11 @@ module.exports = ({ registerHook, registerAction }) => {
     hook: '$FASTIFY_ROUTE',
     handler: ({ registerRoute }, { getContext, getConfig }) => {
       const fetchq = getContext('fetchq');
-      const emit = getContext('invoices.emit');
+      const emitJSON = getContext('kafka.emitJSON');
 
       const apis = {
         query: fetchq.pool.query.bind(fetchq.pool),
-        emit,
+        emitJSON,
       };
       const params = {};
 

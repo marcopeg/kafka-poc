@@ -1,4 +1,4 @@
-const makeInvoiceDeleteHandler = ({ query, emit }) => async (
+const makeInvoiceDeleteHandler = ({ query, emitJSON }) => async (
   request,
   reply,
 ) => {
@@ -14,7 +14,7 @@ const makeInvoiceDeleteHandler = ({ query, emit }) => async (
     throw new Error('Invoice not found');
   }
 
-  await emit('deleted', invoices.rows[0]);
+  await emitJSON('poc-invoices', 'deleted', invoices.rows[0]);
   reply.send(invoices.rows[0]);
 };
 

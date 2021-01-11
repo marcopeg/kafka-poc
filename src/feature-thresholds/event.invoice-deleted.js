@@ -1,4 +1,4 @@
-const createInvoiceDeletedEvent = ({ query, emit }) => async ({
+const createInvoiceDeletedEvent = ({ query, emitJSON }) => async ({
   user_id,
   ...payload
 }) => {
@@ -14,7 +14,7 @@ const createInvoiceDeletedEvent = ({ query, emit }) => async ({
 
   // @TODO: the threshold should be a parameter or something
   if (results.rows[0].total < 3) {
-    await emit('restored', results.rows[0]);
+    await emitJSON('poc-thresholds', 'restored', results.rows[0]);
   }
 };
 

@@ -1,4 +1,8 @@
-const makeUserCreateHandler = ({ query, emit }) => async (request, reply) => {
+const makeUserCreateHandler = ({ query, emitJSON }) => async (
+  request,
+  reply,
+) => {
+  // Validation phase:
   const { id, name } = request.body;
   if (!id) {
     throw new Error('id needed');
@@ -7,15 +11,16 @@ const makeUserCreateHandler = ({ query, emit }) => async (request, reply) => {
     throw new Error('name needed');
   }
 
-  // Create the user record
+  // CRUD:
   const users = await query(
     `INSERT INTO "users_list"
     VALUES ('${id}', '${name}')
     RETURNING *`,
   );
 
-  await emit('created', users.rows[0]);
-  reply.send('+ok');
+  // Communication:
+  await emitJSON('poc-users', 'created', users.rows[0]);
+  reply.send(users.rows[0]);
 };
 
 module.exports = makeUserCreateHandler;

@@ -1,4 +1,4 @@
-const makeInvoiceCreateHandler = ({ query, emit }) => async (
+const makeInvoiceCreateHandler = ({ query, emitJSON }) => async (
   request,
   reply,
 ) => {
@@ -10,7 +10,7 @@ const makeInvoiceCreateHandler = ({ query, emit }) => async (
     throw new Error('amount needed');
   }
 
-  // Validate user id
+  // Validate User Existance:
   const users = await query(
     `SELECT "name", "can_invoice" FROM "invoices_cache_users" WHERE id = '${user_id}'`,
   );
@@ -18,6 +18,7 @@ const makeInvoiceCreateHandler = ({ query, emit }) => async (
     throw new Error('User not found');
   }
 
+  // Validate User Can Emit Invoices:
   const user = users.rows[0];
   if (!user.can_invoice) {
     throw new Error(
@@ -33,7 +34,7 @@ const makeInvoiceCreateHandler = ({ query, emit }) => async (
     RETURNING *`,
   );
 
-  await emit('created', invoice.rows[0]);
+  await emitJSON('poc-invoices', 'created', invoice.rows[0]);
   reply.send(invoice.rows[0]);
 };
 

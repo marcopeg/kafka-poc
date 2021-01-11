@@ -1,4 +1,7 @@
-const makeUserUpdateHandler = ({ query, emit }) => async (request, reply) => {
+const makeUserUpdateHandler = ({ query, emitJSON }) => async (
+  request,
+  reply,
+) => {
   const { id } = request.params;
   const { name } = request.body;
   if (!id) {
@@ -8,10 +11,12 @@ const makeUserUpdateHandler = ({ query, emit }) => async (request, reply) => {
     throw new Error('name needed');
   }
 
-  await query(`UPDATE "users_list" SET name = '${name}' WHERE id = '${id}'`);
-  await emit('updated', { id, name });
+  const users = await query(
+    `UPDATE "users_list" SET name = '${name}' WHERE id = '${id}' RETURNING *`,
+  );
 
-  reply.send('+ok');
+  await emitJSON('poc-users', 'updated', users.rows[0]);
+  reply.send(users.rows[0]);
 };
 
 module.exports = makeUserUpdateHandler;

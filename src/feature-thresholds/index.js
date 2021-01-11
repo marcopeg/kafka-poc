@@ -25,30 +25,6 @@ module.exports = ({ registerHook, registerAction }) => {
     },
   });
 
-  // Create a producer for the feature:
-  registerAction({
-    name: FEATURE_NAME,
-    trace: __filename,
-    hook: '$INIT_FEATURE',
-    handler: async ({ getContext, setContext }) => {
-      const createProducer = getContext('kafka.createProducer');
-      const producer = await createProducer();
-
-      setContext('thresholds.emit', (key, value) =>
-        producer.send({
-          topic: 'poc-thresholds',
-          messages: [
-            {
-              key,
-              value: JSON.stringify(value),
-              partition: 0,
-            },
-          ],
-        }),
-      );
-    },
-  });
-
   // Register to Kafka streams that are relevant to this service
   registerAction({
     name: FEATURE_NAME,
@@ -57,11 +33,11 @@ module.exports = ({ registerHook, registerAction }) => {
     handler: async ({ getContext }) => {
       const fetchq = getContext('fetchq');
       const createConsumer = getContext('kafka.createConsumer');
-      const emit = getContext('thresholds.emit');
+      const emitJSON = getContext('kafka.emitJSON');
 
       const apis = {
         query: fetchq.pool.query.bind(fetchq.pool),
-        emit,
+        emitJSON,
       };
 
       const thresholdEvents = {

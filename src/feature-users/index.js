@@ -24,41 +24,17 @@ module.exports = ({ registerHook, registerAction }) => {
     },
   });
 
-  // Create a producer for the feature:
-  registerAction({
-    name: FEATURE_NAME,
-    trace: __filename,
-    hook: '$INIT_FEATURE',
-    handler: async ({ getContext, setContext }) => {
-      const createProducer = getContext('kafka.createProducer');
-      const producer = await createProducer();
-
-      setContext('users.emit', (key, value) =>
-        producer.send({
-          topic: 'poc-users',
-          messages: [
-            {
-              key,
-              value: JSON.stringify(value),
-              partition: 0,
-            },
-          ],
-        }),
-      );
-    },
-  });
-
   registerAction({
     name: FEATURE_NAME,
     trace: __filename,
     hook: '$FASTIFY_ROUTE',
     handler: ({ registerRoute }, { getContext, getConfig }) => {
       const fetchq = getContext('fetchq');
-      const emit = getContext('users.emit');
+      const emitJSON = getContext('kafka.emitJSON');
 
       const apis = {
         query: fetchq.pool.query.bind(fetchq.pool),
-        emit,
+        emitJSON,
       };
       const params = {};
 

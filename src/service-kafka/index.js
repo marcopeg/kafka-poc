@@ -16,29 +16,51 @@ module.exports = ({ registerHook, registerAction }) => {
       const consumers = [];
       const producers = [];
 
+      const createConsumer = async (parameters) => {
+        const consumer = client.consumer(parameters);
+        await consumer.connect();
+        consumers.push(consumer);
+        return consumer;
+      };
+
+      const createProducer = async (parameters) => {
+        const producer = client.producer(parameters);
+        await producer.connect();
+        producers.push(producer);
+        return producer;
+      };
+
+      const emitJSON = async (topic, key, value) => {
+        if (!emitJSON.producer) {
+          emitJSON.producer = await createProducer();
+        }
+
+        emitJSON.producer.send({
+          topic,
+          messages: [
+            {
+              key,
+              value: JSON.stringify(value),
+              partition: 0,
+            },
+          ],
+        });
+      };
+
       setContext('kafka', {
-        createConsumer: async (parameters) => {
-          const consumer = client.consumer(parameters);
-          await consumer.connect();
-          consumers.push(consumer);
-          return consumer;
-        },
-        createProducer: async (parameters) => {
-          const producer = client.producer(parameters);
-          await producer.connect();
-          producers.push(producer);
-          return producer;
-        },
+        createConsumer,
+        createProducer,
+        emitJSON,
       });
 
       const errorTypes = ['unhandledRejection', 'uncaughtException'];
       const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
 
       errorTypes.map((type) => {
-        process.on(type, async () => {
+        process.on(type, async (err) => {
           try {
+            console.log(`[kafka on ${type}] ${err.message}`);
             console.log('[kafka] disconnecting all clients....');
-            console.log(`(process.on ${type})`);
             for (let consumer of consumers) {
               await consumer.disconnect();
             }
