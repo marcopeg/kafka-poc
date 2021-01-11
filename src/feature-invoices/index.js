@@ -5,6 +5,8 @@ const makeInvoiceCreateHandler = require('./route.invoice-create');
 const makeInvoiceDeleteHandler = require('./route.invoice-delete');
 
 // Event Handlers
+const createInvoiceCreateHandler = require('./event.invoice-create');
+const createInvoiceDeleteHandler = require('./event.invoice-delete');
 const createUserCreatedHandler = require('./event.user-created');
 const createUserUpdatedHandler = require('./event.user-updated');
 const createThresholdReachedHandler = require('./event.threshold-reached');
@@ -48,18 +50,22 @@ module.exports = ({ registerHook, registerAction }) => {
     handler: async ({ getContext }) => {
       const fetchq = getContext('fetchq');
       const createJSONConsumer = getContext('kafka.createJSONConsumer');
+      const emitJSON = getContext('kafka.emitJSON');
 
       const apis = {
         query: fetchq.pool.query.bind(fetchq.pool),
+        emitJSON,
       };
 
       const groupId = `invoices`;
-      const topics = ['poc-users', 'poc-thresholds'];
+      const topics = ['poc-users', 'poc-invoices', 'poc-thresholds'];
       const handlers = {
+        'create@poc-invoices': createInvoiceCreateHandler(apis),
+        'delete@poc-invoices': createInvoiceDeleteHandler(apis),
         'created@poc-users': createUserCreatedHandler(apis),
         'updated@poc-users': createUserUpdatedHandler(apis),
         'reached@poc-thresholds': createThresholdReachedHandler(apis),
-        'restoredpoc-thresholds': createThresholdRestoredHandler(apis),
+        'restored@poc-thresholds': createThresholdRestoredHandler(apis),
       };
 
       await createJSONConsumer({ groupId, topics, handlers });

@@ -5,17 +5,17 @@ const makeInvoiceDeleteHandler = ({ query, emitJSON }) => async (
   const { invoiceId } = request.params;
 
   const invoices = await query(`
-    DELETE FROM "invoices_list"
+    SELECT * FROM "invoices_list"
     WHERE id = ${invoiceId}
-    RETURNING *
+    LIMIT 1
   `);
 
   if (!invoices.rowCount) {
     throw new Error('Invoice not found');
   }
 
-  await emitJSON('deleted@poc-invoices', invoices.rows[0]);
-  reply.send(invoices.rows[0]);
+  await emitJSON('delete@poc-invoices', { invoiceId });
+  reply.send('+ok');
 };
 
 module.exports = makeInvoiceDeleteHandler;

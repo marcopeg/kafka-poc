@@ -27,15 +27,13 @@ const makeInvoiceCreateHandler = ({ query, emitJSON }) => async (
   }
 
   // Create the invoice record
-  const invoice = await query(
-    `INSERT INTO "invoices_list"
-    ("user_id", "user_name", "amount")
-    VALUES ('${user_id}', '${user.name}', ${amount})
-    RETURNING *`,
-  );
+  await emitJSON('create@poc-invoices', {
+    user_id,
+    user_name: user.name,
+    amount,
+  });
 
-  await emitJSON('created@poc-invoices', invoice.rows[0]);
-  reply.send(invoice.rows[0]);
+  reply.send('+ok');
 };
 
 module.exports = makeInvoiceCreateHandler;
