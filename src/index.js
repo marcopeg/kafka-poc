@@ -24,6 +24,7 @@ runHookApp({
   settings: {
     kafka: {
       clientId: 'c1',
+      isRestoring: false,
       brokers: [`${host}:9092`],
     },
     fetchq: {

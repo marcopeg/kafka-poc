@@ -13,6 +13,7 @@ module.exports = ({ registerHook, registerAction }) => {
     handler: ({ getConfig, setContext }) => {
       const clientId = getConfig('kafka.clientId');
       const brokers = getConfig('kafka.brokers');
+      const isRestoring = getConfig('kafka.isRestoring');
       const client = new Kafka({ clientId, brokers });
 
       const consumers = [];
@@ -35,10 +36,18 @@ module.exports = ({ registerHook, registerAction }) => {
       // event: 'key@topic'
       // payload: { json: 'value' }
       const emitJSON = async (event, payload) => {
+        // Skip side effects while restoring:
+        // !!! THIS IS LIKELY THE WORST WAY TO DO IT !!!
+        if (isRestoring) {
+          return;
+        }
+
+        // Upsert and momoize the producer:
         if (!emitJSON.producer) {
           emitJSON.producer = await createProducer();
         }
 
+        // Append the message:
         const [key, topic] = event.split('@');
         emitJSON.producer.send({
           topic,
@@ -55,7 +64,9 @@ module.exports = ({ registerHook, registerAction }) => {
       // topics: [{ topic: /.*/i, fromBeginning: true }]
       // handlers: { 'event@key': handler(messagesAsJSON)}
       const createJSONConsumer = async ({ groupId, topics, handlers }) => {
-        const consumer = await createConsumer({ groupId });
+        const consumer = await createConsumer({
+          groupId: `${groupId}@${clientId}`,
+        });
 
         // Subscribe to all topics:
         const topicsList =
