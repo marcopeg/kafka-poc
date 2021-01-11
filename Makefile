@@ -1,13 +1,13 @@
 start:
-	humble up -d
+	docker-compose up -d
 	npm install
 	npm start
 
 stop:
-	humble down
+	docker-compose down
 
 clean: stop
 	sudo rm -rf ./.docker-data/kafka
 	sudo rm -rf ./.docker-data/pg
-	humble up -d
+	docker-compose up -d
 
