@@ -1,7 +1,6 @@
 start:
-	docker-compose up -d
-	npm install
-	npm start
+	docker-compose up -d kafka postgres
+	docker-compose up rest_api
 
 stop:
 	docker-compose down
@@ -9,5 +8,5 @@ stop:
 clean: stop
 	sudo rm -rf ./.docker-data/kafka
 	sudo rm -rf ./.docker-data/pg
-	docker-compose up -d
+	docker-compose up -d kafka postgres
 

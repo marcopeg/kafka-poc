@@ -6,9 +6,10 @@ const serviceFetchq = require('@forrestjs/service-fetchq');
 const serviceFastify = require('@forrestjs/service-fastify');
 const serviceFastifyHealthz = require('@forrestjs/service-fastify-healthz');
 
-const serviceKafka = require('./service-kafka');
 const serviceQuery = require('./service-query');
+const serviceKafka = require('./service-kafka');
 const servicePubSub = require('./service-pubsub');
+const serviceTask = require('./service-task');
 
 const featureUsers = require('./feature-users');
 const featureInvoices = require('./feature-invoices');
@@ -16,11 +17,11 @@ const featureThresholds = require('./feature-thresholds');
 const featureKafkaLogger = require('./feature-kafka-logger');
 
 // Check credentials from environment:
+const host = process.env.HOST_IP || ip.address();
 const env = envalid.cleanEnv(process.env, {
   PGSTRING: envalid.url(),
+  KAFKA_BROKER: envalid.str({ default: `${host}:9092` }),
 });
-
-const host = process.env.HOST_IP || ip.address();
 
 runHookApp({
   trace: 'compact',
@@ -28,7 +29,7 @@ runHookApp({
     kafka: {
       clientId: 'c1',
       isRestoring: false,
-      brokers: [`${host}:9092`],
+      brokers: [env.KAFKA_BROKER],
     },
     fetchq: {
       connectionString: env.PGSTRING,
@@ -37,9 +38,10 @@ runHookApp({
   },
   services: [
     serviceFetchq,
-    serviceKafka,
     serviceQuery,
+    serviceKafka,
     servicePubSub,
+    serviceTask,
     serviceFastify,
     serviceFastifyHealthz,
   ],

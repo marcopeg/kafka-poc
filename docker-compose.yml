@@ -41,6 +41,7 @@ services:
     environment:
       NODE_ENV: development
       PGSTRING: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres
+      KAFKA_BROKER: 'kafka:9092'
     volumes:
       - .docker-data/node_modules:/usr/src/app/node_modules:cached
       - ./package.json:/usr/src/app/package.json:delegated
@@ -48,16 +49,22 @@ services:
       - ./src:/usr/src/app/src:delegated
     working_dir: /usr/src/app
     entrypoint: ['npm', 'run', 'start:docker']
+    expose:
+      - 8080
     labels:
       - 'traefik.enable=true'
 
       # Configure basic HTTP mapping:
       - 'traefik.http.routers.kafka-poc--80.entrypoints=http80'
-      - 'traefik.http.routers.kafka-poc--80.rule=Host(`kafka-poc.${CODE_SERVER_DNS}`)'
+      - 'traefik.http.routers.kafka-poc--80.rule=Host(`${CODE_SERVER_DNS}`) && PathPrefix(`/kafka-poc`)'
       - 'traefik.http.routers.kafka-poc--80.middlewares=csi-redirect'
 
       # Configure HTTPS mapping with automatic Letsencrypt certificate management
       - 'traefik.http.routers.kafka-poc--443.tls=true'
       - 'traefik.http.routers.kafka-poc--443.entrypoints=http443'
       - 'traefik.http.routers.kafka-poc--443.tls.certresolver=letsencrypt'
-      - 'traefik.http.routers.kafka-poc--443.rule=Host(`kafka-poc.${CODE_SERVER_DNS}`)'
+      - 'traefik.http.routers.kafka-poc--443.rule=Host(`${CODE_SERVER_DNS}`) && PathPrefix(`/kafka-poc`)'
+      - 'traefik.http.routers.kafka-poc--443.middlewares=kafka-poc--prefix'
+
+      # Configure middlewares:
+      - 'traefik.http.middlewares.kafka-poc--prefix.stripprefix.prefixes=/kafka-poc'
