@@ -5,12 +5,14 @@ const makeInvoiceCreateHandler = require('./route.invoice-create');
 const makeInvoiceDeleteHandler = require('./route.invoice-delete');
 
 // Event Handlers
-const createInvoiceCreateHandler = require('./event.invoice-create');
-const createInvoiceDeleteHandler = require('./event.invoice-delete');
 const createUserCreatedHandler = require('./event.user-created');
 const createUserUpdatedHandler = require('./event.user-updated');
 const createThresholdReachedHandler = require('./event.threshold-reached');
 const createThresholdRestoredHandler = require('./event.threshold-restored');
+
+// Task Handlers
+const createInvoiceCreateTask = require('./task.invoice-create');
+const createInvoiceDeleteTask = require('./task.invoice-delete');
 
 module.exports = ({ registerHook, registerAction }) => {
   registerHook(hooks);
@@ -52,18 +54,20 @@ module.exports = ({ registerHook, registerAction }) => {
       const createJSONConsumer = getContext('kafka.createJSONConsumer');
       const emitJSON = getContext('kafka.emitJSON');
       const publish = getContext('pubsub.publish');
+      const consumeTask = getContext('task.consume');
 
       const apis = {
         query,
         emitJSON,
         publish,
+        consumeTask,
       };
 
       const groupId = `invoices`;
       const topics = ['poc-users', 'poc-invoices', 'poc-thresholds'];
       const handlers = {
-        'create@poc-invoices': createInvoiceCreateHandler(apis),
-        'delete@poc-invoices': createInvoiceDeleteHandler(apis),
+        'create@poc-invoices': consumeTask(createInvoiceCreateTask(apis)),
+        'delete@poc-invoices': consumeTask(createInvoiceDeleteTask(apis)),
         'created@poc-users': createUserCreatedHandler(apis),
         'updated@poc-users': createUserUpdatedHandler(apis),
         'reached@poc-thresholds': createThresholdReachedHandler(apis),
@@ -80,12 +84,10 @@ module.exports = ({ registerHook, registerAction }) => {
     hook: '$FASTIFY_ROUTE',
     handler: ({ registerRoute }, { getContext, getConfig }) => {
       const query = getContext('query');
-      const emitJSON = getContext('kafka.emitJSON');
-      const createTask = getContext('pubsub.createTask');
+      const createTask = getContext('task.create');
 
       const apis = {
         query,
-        emitJSON,
         createTask,
       };
       const params = {};

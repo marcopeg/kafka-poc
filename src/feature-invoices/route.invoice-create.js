@@ -1,4 +1,4 @@
-const makeInvoiceCreateHandler = ({ query, emitJSON, createTask }) => async (
+const makeInvoiceCreateHandler = ({ query, createTask }) => async (
   request,
   reply,
 ) => {
@@ -26,17 +26,17 @@ const makeInvoiceCreateHandler = ({ query, emitJSON, createTask }) => async (
     );
   }
 
-  // Create the invoice record
-  await emitJSON('create@poc-invoices', {
-    request: createTask(($) => reply.send($)),
+  // Create an async task to apply the change to the syste
+  // and being able to send out a transactional output to the user:
+  await createTask({
+    onComplete: ($) => reply.send($),
+    event: 'create@poc-invoices',
     payload: {
       user_id,
       user_name: user.name,
       amount,
     },
   });
-
-  // reply.send('+ok');
 };
 
 module.exports = makeInvoiceCreateHandler;
