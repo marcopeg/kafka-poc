@@ -48,13 +48,15 @@ module.exports = ({ registerHook, registerAction }) => {
     trace: __filename,
     hook: '$START_FEATURE',
     handler: async ({ getContext }) => {
-      const fetchq = getContext('fetchq');
+      const query = getContext('query');
       const createJSONConsumer = getContext('kafka.createJSONConsumer');
       const emitJSON = getContext('kafka.emitJSON');
+      const publish = getContext('pubsub.publish');
 
       const apis = {
-        query: fetchq.pool.query.bind(fetchq.pool),
+        query,
         emitJSON,
+        publish,
       };
 
       const groupId = `invoices`;
@@ -77,12 +79,14 @@ module.exports = ({ registerHook, registerAction }) => {
     trace: __filename,
     hook: '$FASTIFY_ROUTE',
     handler: ({ registerRoute }, { getContext, getConfig }) => {
-      const fetchq = getContext('fetchq');
+      const query = getContext('query');
       const emitJSON = getContext('kafka.emitJSON');
+      const createTask = getContext('pubsub.createTask');
 
       const apis = {
-        query: fetchq.pool.query.bind(fetchq.pool),
+        query,
         emitJSON,
+        createTask,
       };
       const params = {};
 

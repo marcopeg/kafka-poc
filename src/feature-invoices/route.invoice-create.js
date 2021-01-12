@@ -1,4 +1,4 @@
-const makeInvoiceCreateHandler = ({ query, emitJSON }) => async (
+const makeInvoiceCreateHandler = ({ query, emitJSON, createTask }) => async (
   request,
   reply,
 ) => {
@@ -28,12 +28,15 @@ const makeInvoiceCreateHandler = ({ query, emitJSON }) => async (
 
   // Create the invoice record
   await emitJSON('create@poc-invoices', {
-    user_id,
-    user_name: user.name,
-    amount,
+    request: createTask(($) => reply.send($)),
+    payload: {
+      user_id,
+      user_name: user.name,
+      amount,
+    },
   });
 
-  reply.send('+ok');
+  // reply.send('+ok');
 };
 
 module.exports = makeInvoiceCreateHandler;

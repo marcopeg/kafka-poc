@@ -1,4 +1,4 @@
-const makeInvoiceDeleteHandler = ({ query, emitJSON }) => async (
+const makeInvoiceDeleteHandler = ({ query, emitJSON, createTask }) => async (
   request,
   reply,
 ) => {
@@ -14,8 +14,10 @@ const makeInvoiceDeleteHandler = ({ query, emitJSON }) => async (
     throw new Error('Invoice not found');
   }
 
-  await emitJSON('delete@poc-invoices', { invoiceId });
-  reply.send('+ok');
+  await emitJSON('delete@poc-invoices', {
+    request: createTask(($) => reply.send($)),
+    payload: { invoiceId },
+  });
 };
 
 module.exports = makeInvoiceDeleteHandler;

@@ -7,6 +7,9 @@ const serviceFastify = require('@forrestjs/service-fastify');
 const serviceFastifyHealthz = require('@forrestjs/service-fastify-healthz');
 
 const serviceKafka = require('./service-kafka');
+const serviceQuery = require('./service-query');
+const servicePubSub = require('./service-pubsub');
+
 const featureUsers = require('./feature-users');
 const featureInvoices = require('./feature-invoices');
 const featureThresholds = require('./feature-thresholds');
@@ -35,6 +38,8 @@ runHookApp({
   services: [
     serviceFetchq,
     serviceKafka,
+    serviceQuery,
+    servicePubSub,
     serviceFastify,
     serviceFastifyHealthz,
   ],
