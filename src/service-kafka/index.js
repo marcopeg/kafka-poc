@@ -136,12 +136,10 @@ module.exports = ({ registerHook, registerAction }) => {
           try {
             console.log(`[kafka on ${type}] ${err.message}`);
             console.log('[kafka] disconnecting all clients....');
-            for (let consumer of consumers) {
-              await consumer.disconnect();
-            }
-            for (let producer of producers) {
-              await producer.disconnect();
-            }
+            await Promise.all([
+              ...consumers.map(($) => $.disconnect()),
+              ...producers.map(($) => $.disconnect()),
+            ]);
             console.log('[kafka] goodbye :-)');
             process.exit(0);
           } catch (_) {
@@ -152,14 +150,13 @@ module.exports = ({ registerHook, registerAction }) => {
 
       signalTraps.map((type) => {
         process.once(type, async () => {
+          console.log(`[kafka] ${type} termination detected.`);
           console.log('[kafka] disconnecting all clients....');
           try {
-            for (let consumer of consumers) {
-              await consumer.disconnect();
-            }
-            for (let producer of producers) {
-              await producer.disconnect();
-            }
+            await Promise.all([
+              ...consumers.map(($) => $.disconnect()),
+              ...producers.map(($) => $.disconnect()),
+            ]);
             console.log('[kafka] goodbye :-)');
           } catch (err) {
             console.log('NOOOOOO');

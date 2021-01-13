@@ -83,23 +83,14 @@ module.exports = ({ registerHook, registerAction }) => {
 
       errorTypes.map((type) => {
         process.on(type, async (err) => {
-          try {
-            console.log(`[pubsub on ${type}] ${err.message}`);
-            await cleanup();
-            process.exit(0);
-          } catch (_) {
-            process.exit(1);
-          }
+          console.log(`[pubsub on ${type}] ${err.message}`);
         });
       });
 
       signalTraps.map((type) => {
-        process.once(type, async () => {
-          try {
-            await cleanup();
-          } finally {
-            process.kill(process.pid, type);
-          }
+        process.once(type, () => {
+          console.log(`[pubsub] ${type} termination detected.`);
+          cleanup();
         });
       });
     },
