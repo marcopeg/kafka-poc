@@ -14,6 +14,7 @@ const serviceTask = require('./service-task');
 const featureUsers = require('./feature-users');
 const featureInvoices = require('./feature-invoices');
 const featureThresholds = require('./feature-thresholds');
+const featureTotals = require('./feature-totals');
 const featureKafkaLogger = require('./feature-kafka-logger');
 
 // Check credentials from environment:
@@ -50,5 +51,6 @@ runHookApp({
     featureUsers,
     featureInvoices,
     featureThresholds,
+    featureTotals,
   ],
 });

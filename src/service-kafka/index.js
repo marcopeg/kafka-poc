@@ -114,11 +114,13 @@ module.exports = ({ registerHook, registerAction }) => {
                   partition,
                 });
               } else {
-                console.log(`[kafka] handler not found for: ${event}`);
+                // console.log(`[kafka] handler not found for: ${event}`);
               }
             }
           },
         });
+
+        return consumer;
       };
 
       setContext('kafka', {
