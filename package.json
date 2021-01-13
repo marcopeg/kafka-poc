@@ -15,7 +15,8 @@
     "@forrestjs/package-fastify": "3.19.8",
     "envalid": "^6.0.2",
     "ip": "^1.1.5",
-    "kafkajs": "^1.15.0"
+    "kafkajs": "^1.15.0",
+    "serialize-error": "^8.0.0"
   },
   "devDependencies": {
     "nodemon": "^1.18.3"

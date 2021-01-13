@@ -16,8 +16,7 @@ const makeInvoiceDeleteHandler = ({ query, emitJSON, createTask }) => async (
 
   // Create an async task to apply the change to the syste
   // and being able to send out a transactional output to the user:
-  await createTask({
-    onComplete: ($) => reply.send($),
+  await createTask(reply, {
     event: 'delete@poc-invoices',
     payload: { invoiceId },
   });
