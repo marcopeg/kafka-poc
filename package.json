@@ -7,7 +7,13 @@
     "start": "nodemon src/index.js",
     "start:docker": "npm i && nodemon src/index.js",
     "producer": "nodemon producer.js",
-    "consumer": "nodemon consumer.js"
+    "consumer": "nodemon consumer.js",
+    "___// Testing Utilities //___": "",
+    "test": "npm run test:unit",
+    "test:e2e": "./node_modules/.bin/jest --projects test/templates/e2e --runInBand --testTimeout=10000",
+    "test:unit": "./node_modules/.bin/jest --projects test/templates/unit",
+    "tdd:e2e": "./node_modules/.bin/jest --projects test/templates/e2e --runInBand --watchAll --testTimeout=10000",
+    "tdd:unit": "jest --projects test/templates/unit --watchAll"
   },
   "author": "",
   "license": "ISC",
@@ -20,6 +26,7 @@
   },
   "devDependencies": {
     "axios": "^0.21.1",
+    "jest": "^26.6.3",
     "nodemon": "^1.18.3"
   }
 }

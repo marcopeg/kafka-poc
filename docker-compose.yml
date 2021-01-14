@@ -51,6 +51,8 @@ services:
     entrypoint: ['npm', 'run', 'start:docker']
     expose:
       - 8080
+    ports:
+      - 8080:8080
     labels:
       - 'traefik.enable=true'
 
@@ -68,3 +70,21 @@ services:
 
       # Configure middlewares:
       - 'traefik.http.middlewares.kafka-poc--prefix.stripprefix.prefixes=/kafka-poc'
+
+  tdd_e2e:
+    container_name: kafka_poc_tdd_e2e
+    image: node:12
+    depends_on:
+      - rest_api
+    environment:
+      NODE_ENV: development
+      SERVER_ROOT: http://rest_api:8080
+    volumes:
+      - .docker-data/node_modules:/usr/src/app/node_modules:cached
+      - ./package.json:/usr/src/app/package.json:delegated
+      - ./package-lock.json:/usr/src/app/package-lock.json:delegated
+      - ./jest.config.js:/usr/src/app/jest.config.js:delegated
+      - ./test:/usr/src/app/test:delegated
+      - ./src:/usr/src/app/src:delegated
+    working_dir: /usr/src/app
+    entrypoint: ['npm', 'run', 'tdd:e2e']

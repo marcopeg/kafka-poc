@@ -9,6 +9,29 @@ const useServiceTDD =
 const serviceTDD = ({ registerAction, createHook, registerHook }) => {
   registerHook(hooks);
 
+  // Reset the test healthcheck flag on system stop:
+  registerAction({
+    hook: '$INIT_SERVICE',
+    name: SERVICE_NAME,
+    trace: __filename,
+    handler: ({ setContext }) => {
+      const errorTypes = ['unhandledRejection', 'uncaughtException'];
+      const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
+
+      errorTypes.map((type) => {
+        process.on(type, async (err) => {
+          setContext('tdd.ready', false);
+        });
+      });
+
+      signalTraps.map((type) => {
+        process.once(type, async () => {
+          setContext('tdd.ready', false);
+        });
+      });
+    },
+  });
+
   // Exposes a hook that let register routes scoped under `/test`
   registerAction({
     hook: '$FASTIFY_ROUTE?',
@@ -34,6 +57,7 @@ const serviceTDD = ({ registerAction, createHook, registerHook }) => {
     trace: __filename,
     handler: (ctx) => {
       createHook.sync(hooks.TDD_HTTP_MOCKS, ctx);
+      ctx.setContext('tdd.ready', true);
     },
   });
 
@@ -42,15 +66,28 @@ const serviceTDD = ({ registerAction, createHook, registerHook }) => {
     hook: '$TDD_FASTIFY_ROUTE?',
     name: SERVICE_NAME,
     trace: __filename,
-    handler: ({ registerRoute }, { getContext, setConfig }) => {
+    handler: ({ registerRoute }, { getContext, setContext, setConfig }) => {
       const fetchq = getContext('fetchq');
       const query = fetchq.pool.query.bind(fetchq.pool);
 
       // Provide a health-check route to the TDD environment:
+      // NOTE: it checks a context variable that is set only after
+      //       the complete initialization of the system, and that is
+      //       set to "false" when detecting the KILL signal.
+      //       This will let time for all the stuff that needs to
+      //       unregister to be done.
       registerRoute({
         method: 'GET',
         url: '/status',
-        handler: async () => ({ message: '+ok' }),
+        handler: (request, reply) => {
+          try {
+            const isReady = getContext('tdd.ready');
+            if (!isReady) throw new Error('not ready');
+            reply.send({ message: '+ok' });
+          } catch (err) {
+            reply.code(500).send(err.message);
+          }
+        },
       });
 
       // Expose a query interface to interact with the database
@@ -59,7 +96,14 @@ const serviceTDD = ({ registerAction, createHook, registerHook }) => {
       registerRoute({
         method: 'POST',
         url: '/query',
-        handler: (request) => query(request.body.query),
+        handler: async (request, reply) => {
+          try {
+            const result = await query(request.body.query);
+            reply.send(result);
+          } catch (err) {
+            reply.status(500).send(err.message);
+          }
+        },
       });
 
       // Expose a way to dynamically access the App's configuration
@@ -99,7 +143,7 @@ const serviceTDD = ({ registerAction, createHook, registerHook }) => {
 
       // Run all the reset DB instructions:
       registerRoute({
-        method: 'GET',
+        method: 'POST',
         url: '/db/reset',
         handler: async (request, reply) => {
           await createHook.serie(hooks.TDD_RESET_DB, { query });
