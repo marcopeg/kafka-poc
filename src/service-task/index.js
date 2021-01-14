@@ -15,26 +15,41 @@ module.exports = ({ registerHook, registerAction }) => {
       const publish = getContext('pubsub.publish');
       const emitJSON = getContext('kafka.emitJSON');
 
-      const createTaks = async ({
+      const createTask = async ({
         event,
         payload,
+        timeout,
         onComplete = noop,
-        onError = noop,
+        onError: onTimeout = noop,
       }) => {
         const handler = ({ success, data, error }) => {
           if (success) {
             onComplete(data);
           } else {
-            onError(deserializeError(error));
+            onTimeout(deserializeError(error));
           }
         };
-        const request = createPubsubTask(handler, { onTimeout: onError });
+
+        const request = createPubsubTask(handler, {
+          timeout,
+          onTimeout,
+        });
+
         emitJSON(event, { request, payload });
         return request;
       };
 
+      const createTaskPromise = (config) =>
+        new Promise((resolve, reject) => {
+          createTask({
+            onComplete: resolve,
+            onError: reject,
+            ...config,
+          });
+        });
+
       const createHttpTask = (reply, config) =>
-        createTaks({
+        createTask({
           onComplete: (data) => reply.send(data),
           onError: (error) => reply.status(500).send(error),
           ...config,
@@ -49,8 +64,9 @@ module.exports = ({ registerHook, registerAction }) => {
         }
       };
 
-      setContext('task.create', createTaks);
-      setContext('task.createHttpTask', createHttpTask);
+      setContext('task.create', createTask);
+      setContext('task.createPromise', createTaskPromise);
+      setContext('task.createHttp', createHttpTask);
       setContext('task.consume', consumeTask);
     },
   });

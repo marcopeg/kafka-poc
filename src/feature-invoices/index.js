@@ -84,7 +84,7 @@ module.exports = ({ registerHook, registerAction }) => {
     hook: '$FASTIFY_ROUTE',
     handler: ({ registerRoute }, { getContext, getConfig }) => {
       const query = getContext('query');
-      const createTask = getContext('task.createHttpTask');
+      const createTask = getContext('task.createHttp');
 
       const apis = {
         query,

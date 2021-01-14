@@ -19,6 +19,7 @@
     "serialize-error": "^8.0.0"
   },
   "devDependencies": {
+    "axios": "^0.21.1",
     "nodemon": "^1.18.3"
   }
 }
