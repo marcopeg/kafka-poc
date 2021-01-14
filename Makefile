@@ -19,3 +19,9 @@ logs:
 
 tdd-e2e:
 	docker-compose up tdd_e2e
+
+stress-app: start-services
+	docker-compose up --scale stress-app=2 stress-app
+
+stress-test:
+	docker-compose up --scale stress-test=2 stress-test

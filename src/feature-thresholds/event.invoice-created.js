@@ -12,7 +12,7 @@ const createInvoiceCreatedEvent = ({ query, emitJSON }) => async ({
   `);
 
   // @TODO: the threshold should be a parameter or something
-  if (results.rows[0].total >= 3) {
+  if (results.rows[0].total >= 399999999) {
     await emitJSON('reached@poc-thresholds', results.rows[0]);
   }
 };

@@ -49,7 +49,7 @@ runHookApp({
     serviceTdd,
   ],
   features: [
-    featureKafkaLogger,
+    // featureKafkaLogger,
     featureUsers,
     featureInvoices,
     featureThresholds,

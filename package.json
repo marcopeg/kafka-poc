@@ -6,6 +6,8 @@
   "scripts": {
     "start": "nodemon src/index.js",
     "start:docker": "npm i && nodemon src/index.js",
+    "stress": "nodemon stress.js",
+    "stress:docker": "node stress.js",
     "producer": "nodemon producer.js",
     "consumer": "nodemon consumer.js",
     "___// Testing Utilities //___": "",

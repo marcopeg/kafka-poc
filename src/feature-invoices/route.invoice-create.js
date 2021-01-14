@@ -29,6 +29,7 @@ const makeInvoiceCreateHandler = ({ query, createTask }) => async (
   // Create an async task to apply the change to the syste
   // and being able to send out a transactional output to the user:
   createTask(reply, {
+    timeout: 500,
     event: 'create@poc-invoices',
     payload: {
       user_id,

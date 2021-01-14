@@ -88,3 +88,35 @@ services:
       - ./src:/usr/src/app/src:delegated
     working_dir: /usr/src/app
     entrypoint: ['npm', 'run', 'tdd:e2e']
+
+  stress-app:
+    image: node:12
+    depends_on:
+      - postgres
+    environment:
+      NODE_ENV: development
+      PGSTRING: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres
+      KAFKA_BROKER: 'kafka:9092'
+    volumes:
+      - .docker-data/node_modules:/usr/src/app/node_modules:cached
+      - ./package.json:/usr/src/app/package.json:delegated
+      - ./package-lock.json:/usr/src/app/package-lock.json:delegated
+      - ./src:/usr/src/app/src:delegated
+    working_dir: /usr/src/app
+    entrypoint: ['node', 'src/index.js']
+
+  stress-test:
+    image: node:12
+    depends_on:
+      - rest_api
+    environment:
+      NODE_ENV: development
+      SERVER_ROOT: http://stress-app:8080
+    volumes:
+      - .docker-data/node_modules:/usr/src/app/node_modules:cached
+      - ./package.json:/usr/src/app/package.json:delegated
+      - ./package-lock.json:/usr/src/app/package-lock.json:delegated
+      - ./src:/usr/src/app/src:delegated
+      - ./stress.js:/usr/src/app/stress.js:delegated
+    working_dir: /usr/src/app
+    entrypoint: ['npm', 'run', 'stress:docker']
