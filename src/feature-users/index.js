@@ -5,6 +5,18 @@ const makeUsersListHandler = require('./route.users-list');
 const makeUserCreateHandler = require('./route.user-create');
 const makeUserUpdateHandler = require('./route.user-update');
 
+const sqlDrop = `
+  DROP TABLE IF EXISTS "public"."users_list" CASCADE
+`;
+const sqlCreate = `
+  CREATE TABLE IF NOT EXISTS "public"."users_list" (
+    "id" varchar(10),
+    "name" text,
+    "created_at" timestamp DEFAULT NOW(),
+    PRIMARY KEY ("id")
+  );    
+`;
+
 module.exports = ({ registerHook, registerAction }) => {
   registerHook(hooks);
 
@@ -12,15 +24,16 @@ module.exports = ({ registerHook, registerAction }) => {
     name: FEATURE_NAME,
     trace: __filename,
     hook: '$FETCHQ_READY',
-    handler: async ({ fetchq }) => {
-      await fetchq.pool.query(`
-        CREATE TABLE IF NOT EXISTS "public"."users_list" (
-          "id" varchar(10),
-          "name" text,
-          "created_at" timestamp DEFAULT NOW(),
-          PRIMARY KEY ("id")
-        );    
-      `);
+    handler: async ({ fetchq }) => fetchq.pool.query(sqlCreate),
+  });
+
+  registerAction({
+    name: FEATURE_NAME,
+    trace: __filename,
+    hook: '$TDD_RESET_DB?',
+    handler: async ({ query }) => {
+      await query(sqlDrop);
+      await query(sqlCreate);
     },
   });
 

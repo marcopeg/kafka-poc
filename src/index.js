@@ -10,6 +10,7 @@ const serviceQuery = require('./service-query');
 const serviceKafka = require('./service-kafka');
 const servicePubSub = require('./service-pubsub');
 const serviceTask = require('./service-task');
+const serviceTdd = require('./service-tdd');
 
 const featureUsers = require('./feature-users');
 const featureInvoices = require('./feature-invoices');
@@ -45,6 +46,7 @@ runHookApp({
     serviceTask,
     serviceFastify,
     serviceFastifyHealthz,
+    serviceTdd,
   ],
   features: [
     featureKafkaLogger,

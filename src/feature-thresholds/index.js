@@ -7,6 +7,17 @@ const makeGetUserTotalHandler = require('./route.get-user-total');
 const createInvoiceCreatedHandler = require('./event.invoice-created');
 const createInvoiceDeletedEvent = require('./event.invoice-deleted');
 
+const sqlDrop = `
+  DROP TABLE IF EXISTS "public"."thresholds" CASCADE;
+`;
+const sqlCreate = `
+  CREATE TABLE IF NOT EXISTS "public"."thresholds" (
+    "user_id" varchar(10),
+    "total" integer,
+    PRIMARY KEY ("user_id")
+  );
+`;
+
 module.exports = ({ registerHook, registerAction }) => {
   registerHook(hooks);
 
@@ -14,14 +25,16 @@ module.exports = ({ registerHook, registerAction }) => {
     name: FEATURE_NAME,
     trace: __filename,
     hook: '$FETCHQ_READY',
-    handler: async ({ fetchq }) => {
-      await fetchq.pool.query(`
-          CREATE TABLE IF NOT EXISTS "public"."thresholds" (
-            "user_id" varchar(10),
-            "total" integer,
-            PRIMARY KEY ("user_id")
-          );
-        `);
+    handler: async ({ fetchq }) => fetchq.pool.query(sqlCreate),
+  });
+
+  registerAction({
+    name: FEATURE_NAME,
+    trace: __filename,
+    hook: '$TDD_RESET_DB?',
+    handler: async ({ query }) => {
+      await query(sqlDrop);
+      await query(sqlCreate);
     },
   });
 

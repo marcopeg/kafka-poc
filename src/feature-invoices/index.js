@@ -14,6 +14,28 @@ const createThresholdRestoredHandler = require('./event.threshold-restored');
 const createInvoiceCreateTask = require('./task.invoice-create');
 const createInvoiceDeleteTask = require('./task.invoice-delete');
 
+const sqlDrop = `
+  DROP TABLE IF EXISTS "public"."invoices_list" CASCADE;
+  DROP TABLE IF EXISTS "public"."invoices_cache_users" CASCADE;
+`;
+const sqlCreate = `
+  CREATE TABLE IF NOT EXISTS "public"."invoices_list" (
+    "id" serial,
+    "user_id" varchar(10),
+    "user_name" TEXT,
+    "amount" integer,
+    "created_at" timestamp DEFAULT now(),
+    PRIMARY KEY ("id")
+  );
+  CREATE TABLE IF NOT EXISTS "public"."invoices_cache_users" (
+    "id" varchar(10),
+    "name" text,
+    "can_invoice" BOOLEAN DEFAULT true,
+    "created_at" timestamp DEFAULT NOW(),
+    PRIMARY KEY ("id")
+  );    
+`;
+
 module.exports = ({ registerHook, registerAction }) => {
   registerHook(hooks);
 
@@ -21,27 +43,16 @@ module.exports = ({ registerHook, registerAction }) => {
     name: FEATURE_NAME,
     trace: __filename,
     hook: '$FETCHQ_READY',
-    handler: async ({ fetchq }) => {
-      await fetchq.pool.query(`
-        CREATE TABLE IF NOT EXISTS "public"."invoices_list" (
-          "id" serial,
-          "user_id" varchar(10),
-          "user_name" TEXT,
-          "amount" integer,
-          "created_at" timestamp DEFAULT now(),
-          PRIMARY KEY ("id")
-        );    
-      `);
+    handler: async ({ fetchq }) => fetchq.pool.query(sqlCreate),
+  });
 
-      await fetchq.pool.query(`
-        CREATE TABLE IF NOT EXISTS "public"."invoices_cache_users" (
-          "id" varchar(10),
-          "name" text,
-          "can_invoice" BOOLEAN DEFAULT true,
-          "created_at" timestamp DEFAULT NOW(),
-          PRIMARY KEY ("id")
-        );    
-      `);
+  registerAction({
+    name: FEATURE_NAME,
+    trace: __filename,
+    hook: '$TDD_RESET_DB?',
+    handler: async ({ query }) => {
+      await query(sqlDrop);
+      await query(sqlCreate);
     },
   });
 

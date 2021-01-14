@@ -4,6 +4,19 @@ const { FEATURE_NAME, hooks } = require('./hooks');
 const createInvoiceCreatedHandler = require('./event.invoice-created');
 const createInvoiceDeletedEvent = require('./event.invoice-deleted');
 
+const sqlDrop = `
+  DROP TABLE IF EXISTS "public"."totals" CASCADE;
+`;
+const sqlCreate = `
+  CREATE TABLE IF NOT EXISTS "public"."totals" (
+    "user_id" varchar(10),
+    "year" smallint,
+    "month" smallint,
+    "total" integer DEFAULT 0,
+    PRIMARY KEY ("user_id", "year", "month")
+  );
+`;
+
 module.exports = ({ registerHook, registerAction }) => {
   registerHook(hooks);
 
@@ -11,16 +24,16 @@ module.exports = ({ registerHook, registerAction }) => {
     name: FEATURE_NAME,
     trace: __filename,
     hook: '$FETCHQ_READY',
-    handler: async ({ fetchq }) => {
-      await fetchq.pool.query(`
-        CREATE TABLE IF NOT EXISTS "public"."totals" (
-        "user_id" varchar(10),
-        "year" smallint,
-        "month" smallint,
-        "total" integer DEFAULT 0,
-        PRIMARY KEY ("user_id", "year", "month")
-        );
-      `);
+    handler: async ({ fetchq }) => fetchq.pool.query(sqlCreate),
+  });
+
+  registerAction({
+    name: FEATURE_NAME,
+    trace: __filename,
+    hook: '$TDD_RESET_DB?',
+    handler: async ({ query }) => {
+      await query(sqlDrop);
+      await query(sqlCreate);
     },
   });
 
